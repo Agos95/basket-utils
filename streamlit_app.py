@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 
-from pdf_parsing import parse_pdf
+import pdf_parsing
 
 st.set_page_config(
     page_title="Arcella Basket Utilities", page_icon="assets/icon.svg", layout="wide"
@@ -9,6 +9,8 @@ st.set_page_config(
 st.logo("assets/icon.svg", link="https://www.pallacanestroarcella.com/")
 
 _ST_TEAM_MAPPING_KEY = "team_rename"
+
+parse_pdf = st.cache_data(pdf_parsing.parse_pdf)
 
 
 @st.cache_data()
@@ -36,7 +38,7 @@ if file:
             break
     team = st.selectbox("Filter Teams", options=teams, index=index, key="team_filter")
 
-    table_col, rename_col = st.columns([0.7, 0.3])
+    table_col, rename_col = st.columns([0.7, 0.3], gap="large")
 
     with table_col:
         if team:

@@ -4,7 +4,6 @@ import re
 
 import pandas as pd
 import pdfplumber
-import streamlit as st
 
 
 def _split_and_remove_spaces(text: str) -> str:
@@ -50,7 +49,6 @@ def postprocess_address(text: str) -> list[tuple[str, str]]:
     return address
 
 
-@st.cache_data()
 def parse_pdf(file: io.BytesIO) -> pd.DataFrame:
     pdf = pdfplumber.open(file)
     first_page = pdf.pages[0]
