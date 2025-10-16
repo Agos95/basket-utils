@@ -23,20 +23,26 @@ def _replace_team(x: str, mapping: dict[str, str | None]) -> str:
 
 st.title("Arcella Basket Utilities")
 
+team_selector_col, file_upload_col = st.columns([0.5, 0.5])
 
-file = st.file_uploader("Upload PDF", type="pdf")
+with file_upload_col:
+    file = st.file_uploader("Upload PDF", type="pdf")
 if file:
     df = parse_pdf(file)
     teams = sorted(df["Home"].unique())
     if _ST_TEAM_MAPPING_KEY not in st.session_state:
-        st.session_state[_ST_TEAM_MAPPING_KEY] = {k: None for k in teams}
+        st.session_state[_ST_TEAM_MAPPING_KEY] = {t: "" for t in teams}
 
     index = None
     for i, team in enumerate(teams):
         if "arcella" in team.lower():
             index = i
             break
-    team = st.selectbox("Filter Teams", options=teams, index=index, key="team_filter")
+
+    with team_selector_col:
+        team = st.selectbox(
+            "Filter Teams", options=teams, index=index, key="team_filter"
+        )
 
     table_col, rename_col = st.columns([0.7, 0.3], gap="large")
 
@@ -49,10 +55,10 @@ if file:
 
         rename = st.session_state.get(_ST_TEAM_MAPPING_KEY, None)
         if rename is not None:
-            # df = df.replace(to_replace=rename.keys(), value=rename.values())
             df["Home"] = df["Home"].apply(_replace_team, mapping=rename)
             df["Away"] = df["Away"].apply(_replace_team, mapping=rename)
 
+        st.markdown("#### Games")
         st.dataframe(df, hide_index=False)
 
         st.download_button(
@@ -60,16 +66,12 @@ if file:
         )
 
     with rename_col:
-        rename_df = pd.DataFrame(
-            {
-                "Team": st.session_state[_ST_TEAM_MAPPING_KEY].keys(),
-                "Rename": st.session_state[_ST_TEAM_MAPPING_KEY].values(),
-            }
+        rename_df = st.session_state[_ST_TEAM_MAPPING_KEY]
+
+        st.markdown("#### Rename Teams")
+        rename_df = st.data_editor(
+            rename_df, column_config={0: "Team", 1: "Rename"}, disabled=[0]
         )
-        rename_df = st.data_editor(rename_df, hide_index=True, disabled=["Team"])
-        # FIXME: the rerun is alway triggered, but it needs to be only if there is a modification
-        rename_df = rename_df.replace(to_replace="", value=None)
-        st.session_state[_ST_TEAM_MAPPING_KEY] = {
-            k: v for k, v in zip(rename_df.iloc[:, 0], rename_df.iloc[:, 1])
-        }
-        # st.rerun()
+        if rename_df != st.session_state[_ST_TEAM_MAPPING_KEY]:
+            st.session_state[_ST_TEAM_MAPPING_KEY] = rename_df
+            st.rerun()
