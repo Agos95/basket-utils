@@ -15,6 +15,16 @@
                 "true",
                 "streamlit_app.py"
             ]
+        },
+        {
+            "name": "Gradio",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/.venv/bin/gradio",
+            "args": [
+                "gradio_app.py"
+            ],
+            "console": "integratedTerminal"
         }
     ]
 }
