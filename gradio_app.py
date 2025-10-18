@@ -19,7 +19,12 @@ def upload_pdf(file: str):
             break
     team_selector = gr.Dropdown(choices=teams, value=index, interactive=True)
     calendar_df = filter_teams(df, index)
-    return df, calendar_df, team_selector
+    rename_df = gr.DataFrame(
+        pd.DataFrame({"Team": teams, "Rename": ""}),
+        interactive=True,
+        static_columns=[0],
+    )
+    return df, calendar_df, team_selector, rename_df
 
 
 def filter_teams(df: pd.DataFrame, team: str | None):
@@ -27,6 +32,21 @@ def filter_teams(df: pd.DataFrame, team: str | None):
         df = df.loc[(df["Home"] == team) | (df["Away"] == team)].reset_index(drop=True)
         df = df.set_index([[i + 1 for i in range(len(df))]])
     return df
+
+
+def rename_teams(rename_df: pd.DataFrame, calendar_df: pd.DataFrame):
+    mapping = {k: v for k, v in zip(rename_df.iloc[:, 0], rename_df.iloc[:, 1])}
+
+    def _replace_team(x: str):
+        new_name = mapping.get(x, None)
+        if new_name:
+            return new_name
+        return x
+
+    calendar_df["Home"] = calendar_df["Home"].apply(_replace_team)
+    calendar_df["Away"] = calendar_df["Away"].apply(_replace_team)
+
+    return calendar_df
 
 
 def download_calendar(df: pd.DataFrame):
@@ -49,24 +69,28 @@ with gr.Blocks() as demo:
 
     with gr.Row():
         with gr.Column(scale=4):
-            calendar_df = gr.DataFrame()
+            calendar_df = gr.DataFrame(interactive=False, show_row_numbers=True)
             with gr.Row():
                 with gr.Column(scale=1):
                     download_btn = gr.DownloadButton()
                 with gr.Column(scale=1):
                     file_downloader = gr.File(interactive=False, visible=False)
         with gr.Column(scale=1):
-            rename_df = gr.DataFrame()
+            rename_df = gr.DataFrame(interactive=True)
 
     file_uploader.upload(
         upload_pdf,
         inputs=[file_uploader],
-        outputs=[df_games, calendar_df, team_selector],
+        outputs=[df_games, calendar_df, team_selector, rename_df],
     )
 
     team_selector.input(
         filter_teams, inputs=[df_games, team_selector], outputs=[calendar_df]
     )
+
+    rename_df.input(
+        filter_teams, inputs=[df_games, team_selector], outputs=[calendar_df]
+    ).then(rename_teams, inputs=[rename_df, calendar_df], outputs=[calendar_df])
 
     calendar_df.change(
         lambda: gr.File(interactive=False, visible=False),
