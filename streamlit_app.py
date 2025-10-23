@@ -1,4 +1,13 @@
 import streamlit as st
+from dotenv import load_dotenv
+
+
+@st.cache_resource
+def _load_dotenv():
+    load_dotenv()
+
+
+_load_dotenv()
 
 st.set_page_config(
     page_title="Arcella Basket Utilities", page_icon="assets/icon.svg", layout="wide"
@@ -12,7 +21,8 @@ st.logo(
 
 pages = [
     st.Page("pages/home.py", title="Home"),
-    st.Page("pages/fip_calendar.py", title="Fip Calendar"),
+    st.Page("pages/fip_calendar.py", title="FIP Calendar"),
+    st.Page("pages/game_schedule.py", title="Game Schedule"),
 ]
 
 pg = st.navigation(pages=pages, position="top")
